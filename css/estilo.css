@@ -249,3 +249,10 @@ footer {
     font-size: 1em;
     font-weight: bold;
 }
+
+.key-content{
+    font-weight: bold;
+    font-style: italic;
+    color: purple;
+
+}

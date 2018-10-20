@@ -1,16 +1,26 @@
+/* jshint browser: true, jquery: true, esnext: true*/
+
 /**
  *  Author: Lucas Barretto e Silva
  *  Description: Insert new code lines and set styles
+ *
  */
+var codeRows;
+var consoleRows;
 
 $(document).ready(function () {
-    var tabCode = setTab($("#tab-code"), $("#code-section"));
-    var tabConsole = setTab($("#tab-console"), $("#console-section"));
-    var tabPrint = setTab($("#tab-print"), $("#print-section"));
-    var tabAbout = setTab($("#tab-about"), $("#about-section"));
+    const tabCode = setTab($("#tab-code"), $("#code-section"));
+    const tabConsole = setTab($("#tab-console"), $("#console-section"));
+    const tabPrint = setTab($("#tab-print"), $("#print-section"));
+    const tabAbout = setTab($("#tab-about"), $("#about-section"));
 
-    var codeRows;
-    var consoleRows;
+    //GETTING JSON
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", "json/keyContent.json", true);
+    xhr.send();
+    const keyContent = xhr.response;
+
+
 
     //START set
     select(tabCode);
@@ -25,7 +35,7 @@ $(document).ready(function () {
 
     //CHECKBOXES
     $(":checkbox").change(function () {
-        if (this.checked == true) {
+        if (this.checked === true) {
             copy(this.value);
         } else {
             destroy(this.value);
@@ -33,25 +43,24 @@ $(document).ready(function () {
     });
 
     $("#check-captions").change(function () {
-        if (this.checked == true) {
+        if (this.checked === true) {
             $("#code-view-copy span").show();
             $("#console-view-copy span").show();
-        } else if (this.checked == false) {
+        } else if (this.checked === false) {
             $("#code-view-copy span").hide();
             $("#console-view-copy span").hide();
         }
     });
 
     $("#check-code-header").change(function () {
-        if (this.checked == true) {
+        if (this.checked === true) {
             $("#code-view-copy thead").show();
-        } else if (this.checked == false) {
+        } else if (this.checked === false) {
             $("#code-view-copy thead").hide();
-
         }
     });
 
-    //TABS EVENTS  
+    //TABS EVENTS
     tabCode.htmlElement.click(function () {
         select(tabCode);
         deselect(tabConsole);
@@ -95,8 +104,8 @@ $(document).ready(function () {
     $("textarea").keydown(function (e) {
         if (e.keyCode == 9 || e.which == 9) {
             e.preventDefault();
-            var start = this.selectionStart;
-            var end = this.selectionEnd;
+            let start = this.selectionStart;
+            let end = this.selectionEnd;
             $(this).val($(this).val().substring(0, start) + "\t" + $(this).val().substring(end));
             this.selectionEnd = start + 1;
         }
@@ -110,13 +119,19 @@ $(document).ready(function () {
 
         thead.text($("#code-input-header").val());
         caption.text($("#code-input-caption").val());
-
         for (let i = 0; i < codeRows.length; i++) {
+            for (let content in keyContent.key) {
+                if (codeRows[i].includes(keyContent.key[content])) {
+                    let string = codeRows[i].match(keyContent.key[content]);
+                    codeRows[i] = codeRows[i].replace(string, "<span class='key-content'>" + keyContent.key[content] + "</span>");
+                }
+            }
+
             let tr = $("<tr/>").appendTo(tbody);
             $("<td/>").addClass("col-1").text(i + 1).appendTo(tr);
             $("<td/>").html(codeRows[i]).appendTo(tr);
-            // $("<td/>").text(codeRows[i]).appendTo(tr);
         }
+
         formattingTable();
     });
 
@@ -147,13 +162,18 @@ $(document).ready(function () {
 
     //BTN PRINT EVENT
     $("#btn-print").click(function () {
-        print();
+        $("#print-result").empty();
+        $("body").fadeOut();
+        $("body").fadeIn();
+        html2canvas(document.querySelector("#print-view")).then(canvas => {
+            document.getElementById("print-result").appendChild(canvas);
+        });
     });
 });
 
 //TAB FUCTIONS
 function setTab(tabElement, relatedSectionElement) {
-    var tab = {
+    let tab = {
         htmlElement: tabElement,
         section: relatedSectionElement,
         selected: false,
@@ -162,7 +182,7 @@ function setTab(tabElement, relatedSectionElement) {
 }
 
 function select(tab) {
-    if (tab.selected == false) {
+    if (tab.selected === false) {
         tab.selected = true;
 
         tab.htmlElement.removeClass("tab-deselected");
@@ -172,7 +192,7 @@ function select(tab) {
 }
 
 function deselect(tab) {
-    if (tab.selected == true) {
+    if (tab.selected === true) {
         tab.selected = false;
         tab.htmlElement.addClass("tab-deselected");
         tab.htmlElement.removeClass("tab-selected");
@@ -181,7 +201,7 @@ function deselect(tab) {
 }
 
 function toggleSectionVisibility(tab) {
-    if (tab.selected == true) {
+    if (tab.selected === true) {
         tab.section.css("display", "block");
     } else {
         tab.section.css("display", "none");
@@ -225,20 +245,10 @@ function checkTextarea(textarea, rowsArray) {
     if (navigator.appCodeName == "Mozilla") {
         rowsArray = $(textarea).val().split("\n");
     } else {
-        rowsArray = textarea.text().split("\n");
+        rowsArray = $(textarea).text().split("\n");
     }
 
     console.log(rowsArray);
     $(textarea).attr("rows", rowsArray.length);
     return rowsArray;
-}
-
-//HTML2CANVAS FUNCTIONS
-function print() {
-    $("#print-result").empty();
-    $("body").fadeOut();
-    $("body").fadeIn();
-    html2canvas(document.querySelector("#print-view")).then(canvas => {
-        document.getElementById("print-result").appendChild(canvas);
-    });
 }
